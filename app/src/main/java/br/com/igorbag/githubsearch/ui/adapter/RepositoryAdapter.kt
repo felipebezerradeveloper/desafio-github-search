@@ -7,7 +7,7 @@ import androidx.recyclerview.widget.RecyclerView
 import br.com.igorbag.githubsearch.R
 import br.com.igorbag.githubsearch.domain.Repository
 
-class RepositoryAdapter(private val repositories: List<Repository>) :
+class RepositoryAdapter(private val repositories: List<Repository>, param: (Any) -> Unit) :
     RecyclerView.Adapter<RepositoryAdapter.ViewHolder>() {
 
     var carItemLister: (Repository) -> Unit = {}

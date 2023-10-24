@@ -1,4 +1,4 @@
-package br.com.igorbag.githubsearch.ui
+/*package br.com.igorbag.githubsearch.ui
 
 import android.content.Intent
 import android.net.Uri
@@ -97,4 +97,131 @@ class MainActivity : AppCompatActivity() {
 
     }
 
+}*/
+
+package br.com.igorbag.githubsearch.ui
+
+import android.content.Intent
+import android.net.Uri
+import android.os.Bundle
+import android.widget.Button
+import android.widget.EditText
+import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.RecyclerView
+import br.com.igorbag.githubsearch.R
+import br.com.igorbag.githubsearch.data.GitHubService
+import br.com.igorbag.githubsearch.domain.Repository
+import br.com.igorbag.githubsearch.ui.adapter.RepositoryAdapter
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+
+class MainActivity : AppCompatActivity() {
+
+    private lateinit var nomeUsuario: EditText
+    private lateinit var btnConfirmar: Button
+    private lateinit var listaRepositories: RecyclerView
+    private lateinit var githubApi: GitHubService
+    private lateinit var repositoryAdapter: RepositoryAdapter
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+        setupView()
+        setupListeners()
+        setupRetrofit()
+        getAllReposByUserName()
+    }
+
+    // Método responsável por realizar o setup da view e recuperar os Ids do layout
+    private fun setupView() {
+        nomeUsuario = findViewById(R.id.rv_lista_repositories)
+        btnConfirmar = findViewById(R.id.btn_confirmar)
+        listaRepositories = findViewById(R.id.tv_titulo)
+    }
+
+    // Método responsável por configurar os listeners de clique
+    private fun setupListeners() {
+        btnConfirmar.setOnClickListener {
+            saveUserLocal()
+        }
+    }
+
+    // Salvar o usuário preenchido no EditText utilizando SharedPreferences
+    private fun saveUserLocal() {
+        val userName = nomeUsuario.text.toString()
+        val sharedPref = getSharedPreferences("MyPref", MODE_PRIVATE)
+        val editor = sharedPref.edit()
+        editor.putString("userName", userName)
+        editor.apply()
+    }
+
+    private fun showUserName() {
+        val sharedPref = getSharedPreferences("MyPref", MODE_PRIVATE)
+        val savedUserName = sharedPref.getString("userName", "")
+        if (!savedUserName.isNullOrBlank()) {
+            nomeUsuario.setText(savedUserName)
+        }
+    }
+
+    // Método responsável por fazer a configuração base do Retrofit
+    private fun setupRetrofit() {
+        githubApi = GitHubService.create()
+    }
+
+    // Método responsável por buscar todos os repositórios do usuário fornecido
+    private fun getAllReposByUserName() {
+        showUserName()
+        val userName = "felipebezerradeveloper" // Substitua pelo nome de usuário correto
+        githubApi.getRepositoriesForUser(userName).enqueue(object : Callback<List<Repository>> {
+            override fun onResponse(
+                call: Call<List<Repository>>,
+                response: Response<List<Repository>>
+            ) {
+                if (response.isSuccessful) {
+                    response.body()?.let { repositories ->
+                        setupAdapter(repositories)
+                    }
+                }
+            }
+
+            override fun onFailure(call: Call<List<Repository>>, t: Throwable) {
+                // Handle failure
+            }
+        })
+    }
+
+    // Método responsável por configurar o adapter
+    private fun setupAdapter(list: List<Repository>) {
+        repositoryAdapter = RepositoryAdapter(list) { repository ->
+            shareRepositoryLink(repository.html_url)
+            openBrowser(repository.html_url)
+        }
+        listaRepositories.adapter = repositoryAdapter
+    }
+
+    private fun shareRepositoryLink(urlRepository: String) {
+        TODO("Not yet implemented")
+    }
+
+    // Método responsável por compartilhar o link do repositório selecionado
+    private fun shareRepositoryLink(urlRepository: String, htmlUrl: Any?) {
+        val sendIntent: Intent = Intent().apply {
+            action = Intent.ACTION_SEND
+            putExtra(Intent.EXTRA_TEXT, urlRepository)
+            type = "text/plain"
+        }
+
+        val shareIntent = Intent.createChooser(sendIntent, null)
+        startActivity(shareIntent)
+    }
+
+    private fun Intent(actionView: String, parse: Uri?, c: Char) {
+
+    }
+
+    // Método responsável por abrir o browser com o link informado do repositório
+    private fun openBrowser(urlRepository: String) {
+        startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(urlRepository))
+    }
 }
